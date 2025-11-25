@@ -34,6 +34,12 @@ trait ImageModifiers
         return $this;
     }
 
+    public function blur(int $amount = 5): static
+    {
+        $this->image->blur($amount);
+        return $this;
+    }
+
     public function delete(string $path, ?string $disk = null): bool
     {
         $disk = $disk ?? ($this->config['disk'] ?? 'public');;
