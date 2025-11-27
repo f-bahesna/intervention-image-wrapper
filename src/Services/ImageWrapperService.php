@@ -6,12 +6,12 @@ namespace Fbahesna\InterventionImageWrapper\Services;
 use Fbahesna\InterventionImageWrapper\Traits\ImageOptimization;
 use Fbahesna\InterventionImageWrapper\Traits\ImageModifiers;
 use Fbahesna\InterventionImageWrapper\Traits\ImageUploader;
-use http\Exception\InvalidArgumentException;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
+use InvalidArgumentException;
 
 /**
  * @author frada <fbahezna@gmail.com>
