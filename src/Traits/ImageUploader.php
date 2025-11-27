@@ -11,28 +11,46 @@ use Illuminate\Support\Facades\Storage;
  */
 trait ImageUploader
 {
+    /*
+     |--------------------------------------------------------------------------
+     | store
+     |--------------------------------------------------------------------------
+     | Save image into path you provide
+     | Make directory if not exists
+     | Last method you call it
+     */
     public function store(string $path): string
     {
-        $tempPath = $this->tmpDir. '/'. uniqid('img_', true) . '.' . $this->format;
+        $dir = dirname($path);
+        if(!Storage::disk($this->disk)->exists($dir)) {
+            Storage::disk($this->disk)->makeDirectory($dir);
+        }
 
-        $this->image->save($tempPath, quality: $this->quality);
+        $encoded = $this->image->encode();
+        $binary = $encoded->toString();
 
-        $stream = fopen($tempPath, 'r');
-        Storage::disk($this->disk)->put($path, $stream);
-        fclose($stream);
+        Storage::disk($this->disk)->put($path, $binary);
 
-        @unlink($tempPath);
+        // return path if supported (S3, OSS, etc)
+        if (method_exists(Storage::disk($this->disk), 'url')) {
+            return Storage::disk($this->disk)->url($path);
+        }
 
         return $path;
     }
 
+    /*
+     |--------------------------------------------------------------------------
+     | upload
+     |--------------------------------------------------------------------------
+     |  Handle image upload: load the file, apply edits, then save it.
+     */
     public function upload(
         UploadedFile $file,
         string $dir = 'images',
         ?string $name = null,
         array $options = []
     ): string {
-
         $this->load($file->getRealPath());
 
         if(isset($options['resize'])){
