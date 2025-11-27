@@ -5,13 +5,13 @@
  */
 
 return [
-    'disk' => env('IMAGEWRAP_DISK', 'public'),
+    'disk' => env('IMAGE_WRAPPER_DISK', 'public'),
 
-    'quality' => env('IMAGEWRAP_QUALITY', 85),
+    'quality' => env('IMAGE_WRAPPER_QUALITY', 85),
 
-    'tmp_dir' => env('IMAGEWRAP_TMP', sys_get_temp_dir()),
+    'tmp_dir' => env('IMAGE_WRAPPER_TMP', sys_get_temp_dir()),
 
     'intervention' => [
-        'driver' => env('IMAGEWRAP_DRIVER', 'gd'), // or 'imagick'
+        'driver' => env('IMAGE_WRAPPER_DRIVER', 'gd'), // or 'imagick'
     ],
 ];
