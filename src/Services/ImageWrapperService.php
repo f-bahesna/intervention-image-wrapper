@@ -31,14 +31,14 @@ class ImageWrapperService
     {
         $this->config = $config;
 
-        $driver = $this->config['intervention']['driver']
+        $driver = $this->config['intervention']['driver'] === 'gd'
                 ? new GdDriver()
                 : new ImagickDriver();
 
         $this->manager = new ImageManager($driver);
 
         $this->disk = $config['disk'];
-        $this->quality = $config['quality'] ?? 85;
+        $this->quality = $this->sanitizeInt($config['quality'], 85);
         $this->tmpDir = $config['tmp_dir'] ?? sys_get_temp_dir();
     }
 
@@ -53,6 +53,11 @@ class ImageWrapperService
         $this->format = pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg';
 
         return $this;
+    }
+
+    public function driver()
+    {
+        return $this->driver();
     }
 
     public function getImage()
@@ -73,5 +78,10 @@ class ImageWrapperService
         }
 
         return $source;
+    }
+
+    private function sanitizeInt($value, ?int $default): int
+    {
+        return is_numeric($value) ? (int) $value : $default;
     }
 }

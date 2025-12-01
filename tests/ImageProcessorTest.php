@@ -76,7 +76,7 @@ class ImageProcessorTest extends TestCase
             "Optimized should reduce the image size."
         );
 
-        fwrite(STDOUT, "[TEST] Successfully resizing image from ${originalSize} bytes to ${optimizedSize} bytes\n");
+        fwrite(STDOUT, "[TEST] Successfully resizing image from " .$originalSize. " bytes to ".$optimizedSize." bytes\n");
     }
 
     private function wrapperService()
