@@ -7,27 +7,30 @@ use Fbahesna\InterventionImageWrapper\Facades\ImageWrapper;
 use Fbahesna\InterventionImageWrapper\Services\ImageWrapperService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use \InvalidArgumentException;
 
 /**
  * @author frada <fbahezna@gmail.com>
  */
 class ImageProcessorTest extends TestCase
 {
+    private string $storagePath = './output';
+
+    private string $baseImage = 'tests/images/horse.jpg';
     /*** @test */
     public function test_can_process_an_image()
     {
         parent::setUp();
 
-        $storagePath = __DIR__ . '/output';
-        if(!is_dir($storagePath)){
-            mkdir($storagePath, 0777, true);
+        if(!is_dir($this->storagePath)){
+            mkdir($this->storagePath, 0777, true);
         }
 
         config()->set('imagewrapper.disk', 'local');
         config()->set('filesystems.disks.local',
             [
                 'driver' => 'local',
-                'root' => $storagePath,
+                'root' => $this->storagePath,
             ]
         );
 
@@ -43,9 +46,9 @@ class ImageProcessorTest extends TestCase
 
         fwrite(STDOUT, "[TEST] Finished processing image\n");
 
-        $this->assertFileExists($storagePath.'/'.$output);
+        $this->assertFileExists($this->storagePath.'/'.$output);
 
-        fwrite(STDOUT, "Output file is at: {$storagePath}/{$output}\n");
+        fwrite(STDOUT, "Output file is at: {$this->storagePath}/{$output}\n");
     }
 
     public function test_it_can_resize_image()
@@ -77,6 +80,19 @@ class ImageProcessorTest extends TestCase
         );
 
         fwrite(STDOUT, "[TEST] Successfully resizing image from " .$originalSize. " bytes to ".$optimizedSize." bytes\n");
+    }
+
+    public function test_it_can_detects_corrupted_image()
+    {
+        Storage::fake('public');
+
+        $corrupted = UploadedFile::fake()->image('corrupted.jpg', 4000, 4000);
+
+        file_put_contents($corrupted->getRealPath(), 'not-a-real-image-binary');
+
+        $this->expectException(InvalidArgumentException::class);
+
+        ImageWrapper::load($corrupted)->resize(300, 300);
     }
 
     private function wrapperService()

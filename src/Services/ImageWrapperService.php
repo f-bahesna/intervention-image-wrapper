@@ -9,6 +9,7 @@ use Fbahesna\InterventionImageWrapper\Traits\ImageUploader;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
+use Intervention\Image\Exceptions\DecoderException;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
 use InvalidArgumentException;
@@ -49,7 +50,9 @@ class ImageWrapperService
     public function load(mixed $file): self
     {
         $path = $this->assertFileLoader($file);
-        $this->image = $this->manager->read($path);
+
+        $this->assertInvalidImagePath($path);
+
         $this->format = pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg';
 
         return $this;
@@ -60,9 +63,16 @@ class ImageWrapperService
         return $this->driver();
     }
 
-    public function getImage()
+    /**
+     * check for corrupted image or assign corrected image
+     */
+    private function assertInvalidImagePath(mixed $path): void
     {
-        return $this->image;
+        try {
+            $this->image = $this->manager->read($path);
+        }catch (DecoderException $exception){
+            throw new InvalidArgumentException("Corrupted or unreadable image file.", 0, $exception);
+        }
     }
 
     private function assertFileLoader($source): mixed
@@ -74,7 +84,7 @@ class ImageWrapperService
                 throw new InvalidArgumentException('File does not exist');
             }
         } else {
-            throw new InvalidArgumentException('File must be an instance of UploadedFile or a string');
+            throw new InvalidArgumentException('File must be an instance of UploadedFile or a string path');
         }
 
         return $source;
