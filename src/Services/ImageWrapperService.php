@@ -13,6 +13,7 @@ use Intervention\Image\Exceptions\DecoderException;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
 use InvalidArgumentException;
+use Symfony\Component\Mime\MimeTypes;
 
 /**
  * @author frada <fbahezna@gmail.com>
@@ -51,7 +52,9 @@ class ImageWrapperService
     {
         $path = $this->assertFileLoader($file);
 
-        $this->assertInvalidImagePath($path);
+        $this->validateExtension($file);
+
+        $this->ensureImageIsReadable($path);
 
         $this->format = pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg';
 
@@ -64,9 +67,24 @@ class ImageWrapperService
     }
 
     /**
+     * @param UploadedFile|string $file
+     * Validate extension
+     */
+    private function validateExtension(UploadedFile|string $file): void
+    {
+        $mime = $file instanceof UploadedFile ? $file->getMimeType() : MimeTypes::getDefault()->guessMimeType($file);
+
+        $allowed = ['image/jpeg', 'image/png', 'image/webp'];
+
+        if(!in_array($mime, $allowed, true)) {
+            throw new InvalidArgumentException("Unsupported image type: {$mime}");
+        }
+    }
+
+    /**
      * check for corrupted image or assign corrected image
      */
-    private function assertInvalidImagePath(mixed $path): void
+    private function ensureImageIsReadable(mixed $path): void
     {
         try {
             $this->image = $this->manager->read($path);

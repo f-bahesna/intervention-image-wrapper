@@ -95,6 +95,17 @@ class ImageProcessorTest extends TestCase
         ImageWrapper::load($corrupted)->resize(300, 300);
     }
 
+    public function test_it_can_rejects_invalid_mime()
+    {
+        $file = UploadedFile::fake()->create('fake.pdf', 12, 'application/pdf');
+//        $file = UploadedFile::fake()->image('corrupted.jpg', 4000, 4000);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported image type');
+
+        ImageWrapper::load($file);
+    }
+
     private function wrapperService()
     {
         return $this->app->make(ImageWrapperService::class);
