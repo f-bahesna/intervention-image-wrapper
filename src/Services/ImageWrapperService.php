@@ -3,17 +3,17 @@ declare(strict_types=1);
 
 namespace Fbahesna\InterventionImageWrapper\Services;
 
+use InvalidArgumentException;
+use Illuminate\Http\UploadedFile;
+use Intervention\Image\ImageManager;
+use Symfony\Component\Mime\MimeTypes;
+use Intervention\Image\Interfaces\ImageInterface;
+use Intervention\Image\Exceptions\DecoderException;
 use Fbahesna\InterventionImageWrapper\Traits\ImageOptimization;
 use Fbahesna\InterventionImageWrapper\Traits\ImageModifiers;
 use Fbahesna\InterventionImageWrapper\Traits\ImageUploader;
-use Illuminate\Http\UploadedFile;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
-use Intervention\Image\Exceptions\DecoderException;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Interfaces\ImageInterface;
-use InvalidArgumentException;
-use Symfony\Component\Mime\MimeTypes;
 
 /**
  * @author frada <fbahezna@gmail.com>
@@ -28,6 +28,7 @@ class ImageWrapperService
     protected int $quality;
     protected string $disk;
     protected string $tmpDir;
+    protected array $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'jpeg2000'];
 
     public function __construct(array $config)
     {
@@ -68,7 +69,7 @@ class ImageWrapperService
 
     /**
      * @param UploadedFile|string $file
-     * Validate extension
+     * Validate extension only receive [image/jpeg,image/png,image/webp]
      */
     private function validateExtension(UploadedFile|string $file): void
     {
