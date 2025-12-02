@@ -8,6 +8,7 @@ use Fbahesna\InterventionImageWrapper\Services\ImageWrapperService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use \InvalidArgumentException;
+use Symfony\Component\Mime\MimeTypes;
 
 /**
  * @author frada <fbahezna@gmail.com>
@@ -16,7 +17,6 @@ class ImageProcessorTest extends TestCase
 {
     private string $storagePath = './output';
 
-    private string $baseImage = 'tests/images/horse.jpg';
     /*** @test */
     public function test_can_process_an_image()
     {
@@ -104,6 +104,65 @@ class ImageProcessorTest extends TestCase
         $this->expectExceptionMessage('Unsupported image type');
 
         ImageWrapper::load($file);
+    }
+
+    public function test_it_can_encoded_to_jpeg()
+    {
+        $disk = Storage::disk('local');
+
+        $file = UploadedFile::fake()->image('horse.png', 4000, 4000);
+
+        ImageWrapper::load($file)->store('images/horse.jpg');
+
+        $storedPath = $disk->path('images/horse.jpg');
+
+        $this->assertTrue($disk->exists('images/horse.jpg'));
+
+        $this->assertEquals('image/jpeg', MimeTypes::getDefault()->guessMimeType($storedPath));
+    }
+
+    public function test_it_can_encoded_to_png()
+    {
+        $disk = Storage::disk('local');
+
+        $file = UploadedFile::fake()->image('horse.jpg', 4000, 4000);
+
+        ImageWrapper::load($file)->store('images/horse.png');
+
+        $storedPath = $disk->path('images/horse.png');
+
+        $this->assertTrue($disk->exists('images/horse.png'));
+
+        $this->assertEquals('image/png', MimeTypes::getDefault()->guessMimeType($storedPath));
+    }
+
+    public function test_it_can_encoded_to_webp()
+    {
+        $disk = Storage::disk('local');
+
+        $file = UploadedFile::fake()->image('horse.jpg', 4000, 4000);
+
+        ImageWrapper::load($file)->store('images/horse.webp');
+
+        $storedPath = $disk->path('images/horse.webp');
+
+        $this->assertTrue($disk->exists('images/horse.webp'));
+
+        $this->assertEquals('image/webp', MimeTypes::getDefault()->guessMimeType($storedPath));
+    }
+
+    public function test_it_can_false_if_use_wrong_extension()
+    {
+        $disk = Storage::disk('local');
+
+        $file = UploadedFile::fake()->create('horse.pdf');
+
+        $this->assertTrue($disk->exists('images/horse.webp'));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported image type: application/pdf');
+
+        ImageWrapper::load($file)->store('images/horse.webp');
     }
 
     private function wrapperService()
