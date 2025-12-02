@@ -5,6 +5,7 @@ namespace Fbahesna\InterventionImageWrapper\Traits;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
 
 /**
  * @author frada <fbahezna@gmail.com>
@@ -22,18 +23,19 @@ trait ImageUploader
     public function store(string $path): string
     {
         $dir = dirname($path);
-        if(!Storage::disk($this->disk)->exists($dir)) {
-            Storage::disk($this->disk)->makeDirectory($dir);
+        $disk = Storage::disk($this->disk);
+
+        if(!$disk->exists($dir)) {
+            $disk->makeDirectory($dir);
         }
 
-        $encoded = $this->image->encode();
-        $binary = $encoded->toString();
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
-        Storage::disk($this->disk)->put($path, $binary);
+        $disk->put($path, $this->encode($ext));
 
         // return path if supported (S3, OSS, etc)
-        if (method_exists(Storage::disk($this->disk), 'url')) {
-            return Storage::disk($this->disk)->url($path);
+        if (method_exists($disk, 'url')) {
+            return $disk->url($path);
         }
 
         return $path;
@@ -66,5 +68,29 @@ trait ImageUploader
         $filename = $name ?? uniqid() . "." . $this->format;
 
         return $this->store(trim($dir, '/') . '/' . $filename);
+    }
+
+    /**
+     * The new encoding rules for intervention image V3
+     * jpeg2000 uses modern wavelet based compression that can be both lossy and lossless.
+     */
+    private function encode($ext): string
+    {
+        $this->validateEncode($ext);
+
+        return match ($ext) {
+            'jpg', 'jpeg'   => $this->image->toJpeg($this->quality)->toString(),
+            'png'           => $this->image->toPng()->toString(),
+            'webp'          => $this->image->toWebp($this->quality)->toString(),
+            'jpeg2000'      => $this->image->toJpeg2000($this->quality)->toString(),
+            default         => $this->image->toJpeg($this->quality)->toString(),
+        };
+    }
+
+    private function validateEncode($ext): void
+    {
+        if(!in_array($ext, $this->allowedExtensions)) {
+            throw new InvalidArgumentException('Unsupported output format [$ext]');
+        }
     }
 }
